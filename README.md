@@ -20,7 +20,6 @@ var E_TriggerFunction = new iecstruct.ENUM({
 
 var ST_ScenarioTrigger = new iecstruct()
 	.addElement('eTriggerFunction', E_TriggerFunction)
-	.addElement('eTriggerType', E_TriggerType)
 	.addElement('nElementNo', iecstruct.UINT);
 
 var ST_Scenario = new iecstruct()
