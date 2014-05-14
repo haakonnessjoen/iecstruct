@@ -1,3 +1,43 @@
+iecstruct
+=========
+
+A NodeJS library for parsing and saving IEC 61131-3 structs and types.
+
+Examples
+--------
+
+### Struct with structs and arrrays
+
+```javascript
+var iecstruct = require('iecstruct');
+
+var E_TriggerFunction = new iecstruct.ENUM({
+	TRG_RE: '',
+	TRG_FE: '',
+	TRG_HOLD: ''
+});
+
+
+var ST_ScenarioTrigger = new iecstruct()
+	.addElement('eTriggerFunction', E_TriggerFunction)
+	.addElement('eTriggerType', E_TriggerType)
+	.addElement('nElementNo', iecstruct.UINT);
+
+var ST_Scenario = new iecstruct()
+	.addElement('sName', new iecstruct.STRING(256))
+	.addElement('bScenarioEnabled', iecstruct.BOOL)
+	.addElement('bScenarioInUse', iecstruct.BOOL)
+	.addArray  ('Triggers', ST_ScenarioTrigger, 100);
+
+var Scenarios = new iecstruct()
+	.addArray  ('Scenarios', ST_Scenario, 100);
+
+var buffer = new Buffer(Scenarios.bytelength); /* this buffer could be fetched from the ads library */
+var obj = Scenarios.asObject(buffer, 0);
+
+console.log(obj);
+```
+
 License (MIT)
 -------------
 Copyright (c) 2014 Håkon Nessjøen <haakon.nessjoen@gmail.com>
