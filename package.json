@@ -1,0 +1,31 @@
+{
+  "name": "ads",
+  "version": "0.1.1",
+  "description": "Datatype parser/writer for IEC 61131-3 types and structs",
+  "main": "iecstruct.js",
+  "keywords": [
+    "iec",
+    "61131-3",
+    "twincat",
+    "plc",
+    "ads",
+    "beckhoff"
+  ],
+  "author": {
+    "name": "Håkon Nessjøen"
+  },
+  "homepage": "https://github.com/haakonnessjoen/iecstruct",
+  "bugs": {
+    "url": "https://github.com/haakonnessjoen/iecstruct/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/haakonnessjoen/iecstruct/blob/master/README.md#license-mit"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/haakonnessjoen/iecstruct.git"
+  }
+}
