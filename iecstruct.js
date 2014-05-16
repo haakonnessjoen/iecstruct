@@ -85,7 +85,7 @@ iecstruct.ENUM = function (enumlist) {
 		var value;
 		if (obj in enumlist) {
 			value = enumlist[obj];
-		} else if (!(value+"").match(/^\d+$/)) {
+		} else if (!(obj+"").match(/^\d+$/)) {
 			throw new Error("Invalid enum value");
 		} else {
 			value = obj;
