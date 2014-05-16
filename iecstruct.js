@@ -25,6 +25,11 @@ function iecstruct() {
 }
 
 iecstruct.STRING = function (length) {
+	if (typeof(length) == 'undefined') {
+		length = 80;
+	}
+	/* Null terminator */
+	length++;
 	this.bytelength = length;
 	this.asObject = function (buffer, offset) {
 		var str = buffer.toString('utf8', offset, offset + this.bytelength);
