@@ -1,5 +1,5 @@
 {
-  "name": "ads",
+  "name": "iecstruct",
   "version": "0.0.2",
   "description": "Datatype parser/writer for IEC 61131-3 types and structs",
   "main": "iecstruct.js",
