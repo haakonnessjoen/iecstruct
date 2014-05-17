@@ -25,7 +25,7 @@ function iecstruct() {
 }
 iecstruct._VARIABLE = {
 	prototype: {
-		_asObject: function (arguments) {
+		asObject: function (buffer, offset) {
 			this.offset = arguments.length > 1 && typeof(arguments[1]) != 'undefined' ? arguments[1] : 0;
 			if (arguments.length == 0) {
 				if (typeof(this.buffer) == 'undefined') {
@@ -35,8 +35,9 @@ iecstruct._VARIABLE = {
 			} else {
 				this.buffer = arguments[0];
 			}
+			return this._asObject();
 		},
-		_fromObject: function (arguments) {
+		fromObject: function (obj, buffer, offset) {
 			this.offset = arguments.length > 2 && typeof(arguments[2]) != 'undefined' ? arguments[2] : 0;
 			if (arguments.length <= 1) {
 				if (typeof(this.buffer) == 'undefined') {
@@ -46,14 +47,14 @@ iecstruct._VARIABLE = {
 			} else {
 				this.buffer = arguments[1];
 			}
+			this._fromObject(obj);
 		}
 	}
 };
 
 iecstruct.ARRAY = function (type, length) {
 	this.bytelength = length * type.bytelength;
-	this.asObject = function () {
-		this._asObject(arguments);
+	this._asObject = function () {
 		var obj=[];
 		for (var i = 0; i < length; ++i) {
 			obj.push(type.asObject(this.buffer, this.offset));
@@ -61,8 +62,7 @@ iecstruct.ARRAY = function (type, length) {
 		}
 		return obj;
 	};
-	this.fromObject = function (obj) {
-		this._fromObject(arguments);
+	this._fromObject = function (obj) {
 		if (typeof(obj) != 'object' || !('length' in obj)) {
 			/* Should this emit some kind of "silent" warning? */
 			//throw new Error('Expecting array input at buffer position ' + this.offset + ', while parsing object.');
@@ -85,14 +85,12 @@ iecstruct.STRING = function (length) {
 	length++;
 
 	this.bytelength = length;
-	this.asObject = function () {
-		this._asObject(arguments);
+	this._asObject = function () {
 		var str = this.buffer.toString('utf8', this.offset, this.offset + this.bytelength);
 		return str.replace(/\0.*/,'');
 	};
-	this.fromObject = function (obj) {
+	this._fromObject = function (obj) {
 		obj = obj+""; /* ensure string */
-		this._fromObject(arguments);
 		var stringlen = obj.length < length ? obj.length : length;
 		this.buffer.write(obj, this.offset, this.bytelength, 'utf8');
 		if (this.bytelength - stringlen > 0) {
@@ -111,13 +109,11 @@ iecstruct.WSTRING = function (length) {
 	length++;
 
 	this.bytelength = length * 2;
-	this.asObject = function () {
-		this._asObject(arguments);
+	this._asObject = function () {
 		var str = this.buffer.toString('utf16le', this.offset, this.offset + this.bytelength);
 		return str.replace(/\0.*/,'');
 	};
-	this.fromObject = function (obj) {
-		this._fromObject(arguments);
+	this._fromObject = function (obj) {
 		this.buffer.write(obj, this.offset, this.bytelength, 'utf16le');
 		if (this.bytelength - obj.length > 0) {
 			this.buffer.fill('\0', this.offset + (obj.length * 2), this.offset + (this.bytelength - (obj.length * 2)));
@@ -140,8 +136,7 @@ iecstruct.ENUM = function (enumlist) {
 			lastval = enumlist[key];
 		}
 	}
-	this.asObject = function () {
-		this._asObject(arguments);
+	this._asObject = function () {
 		var value = this.buffer.readUInt16LE(this.offset);
 		for (var key in enumlist) {
 			if (enumlist[key] === value) {
@@ -150,8 +145,7 @@ iecstruct.ENUM = function (enumlist) {
 		}
 		return value;
 	};
-	this.fromObject = function (obj) {
-		this._fromObject(arguments);
+	this._fromObject = function (obj) {
 		var value;
 		if (obj in enumlist) {
 			value = enumlist[obj];
@@ -167,12 +161,10 @@ iecstruct.ENUM.prototype.__proto__ = iecstruct._VARIABLE.prototype;
 
 iecstruct._BOOL = function() {
 	this.bytelength = 1;
-	this.asObject = function () {
-		this._asObject(arguments);
+	this._asObject = function () {
 		return this.buffer.readUInt8(this.offset) != 0 ? true : false;
 	};
-	this.fromObject = function (obj) {
-		this._fromObject(arguments);
+	this._fromObject = function (obj) {
 		this.buffer.writeUInt8(obj ? 1 : 0, this.offset);
 	};
 };
@@ -181,12 +173,10 @@ iecstruct.BOOL = new iecstruct._BOOL();
 
 iecstruct._SINT = function() {
 	this.bytelength = 1;
-	this.asObject = function () {
-		this._asObject(arguments);
+	this._asObject = function () {
 		return this.buffer.readInt8(this.offset);
 	};
-	this.fromObject = function (obj) {
-		this._fromObject(arguments);
+	this._fromObject = function (obj) {
 		this.buffer.writeInt8(obj, this.offset);
 	};
 };
@@ -195,12 +185,10 @@ iecstruct.SINT = new iecstruct._SINT();
 
 iecstruct._USINT = function() {
 	this.bytelength = 1;
-	this.asObject = function () {
-		this._asObject(arguments);
+	this._asObject = function () {
 		return this.buffer.readUInt8(offset);
 	};
-	this.fromObject = function (obj) {
-		this._fromObject(arguments);
+	this._fromObject = function (obj) {
 		this.buffer.writeUInt8(obj, this.offset);
 	};
 };
@@ -209,12 +197,10 @@ iecstruct.BYTE = iecstruct.USINT = new iecstruct._USINT();
 
 iecstruct._INT = function() {
 	this.bytelength = 2;
-	this.asObject = function () {
-		this._asObject(arguments);
+	this._asObject = function () {
 		return this.buffer.readInt16LE(this.offset);
 	};
-	this.fromObject = function (obj) {
-		this._fromObject(arguments);
+	this._fromObject = function (obj) {
 		this.buffer.writeInt16LE(obj, this.offset);
 	};
 };
@@ -223,12 +209,10 @@ iecstruct.INT = new iecstruct._INT();
 
 iecstruct._UINT = function() {
 	this.bytelength = 2;
-	this.asObject = function () {
-		this._asObject(arguments);
+	this._asObject = function () {
 		return this.buffer.readUInt16LE(this.offset);
 	};
-	this.fromObject = function (obj) {
-		this._fromObject(arguments);
+	this._fromObject = function (obj) {
 		this.buffer.writeUInt16LE(obj, this.offset);
 	};
 };
@@ -237,12 +221,10 @@ iecstruct.WORD = iecstruct.UINT = new iecstruct._UINT();
 
 iecstruct._DINT = function() {
 	this.bytelength = 4;
-	this.asObject = function (buffer) {
-		this._asObject(arguments);
+	this._asObject = function (buffer) {
 		return this.buffer.readInt32LE(this.offset);
 	};
-	this.fromObject = function (obj) {
-		this._fromObject(arguments);
+	this._fromObject = function (obj) {
 		this.buffer.writeInt32LE(obj, this.offset);
 	};
 };
@@ -251,12 +233,10 @@ iecstruct.DINT = new iecstruct._DINT();
 
 iecstruct._UDINT = function() {
 	this.bytelength = 4;
-	this.asObject = function () {
-		this._asObject(arguments);
+	this._asObject = function () {
 		return this.buffer.readUInt32LE(this.offset);
 	};
-	this.fromObject = function (obj) {
-		this._fromObject(arguments);
+	this._fromObject = function (obj) {
 		this.buffer.writeUInt32LE(obj, this.offset);
 	};
 };
@@ -265,12 +245,10 @@ iecstruct.DATE_AND_TIME = iecstruct.DT = iecstruct.DATE = iecstruct.DWORD = iecs
 
 iecstruct._REAL = function() {
 	this.bytelength = 4;
-	this.asObject = function () {
-		this._asObject(arguments);
+	this._asObject = function () {
 		return this.buffer.readFloatLE(this.offset);
 	};
-	this.fromObject = function (obj) {
-		this._fromObject(arguments);
+	this._fromObject = function (obj) {
 		this.buffer.writeFloatLE(obj, this.offset);
 	};
 };
@@ -279,12 +257,10 @@ iecstruct.REAL = new iecstruct._REAL();
 
 iecstruct._TIME = function () {
 	this.bytelength = 4;
-	this.asObject = function () {
-		this._asObject(arguments);
+	this._asObject = function () {
 		return this.buffer.readUInt32LE(this.offset) / 1000;
 	};
-	this.fromObject = function (obj) {
-		this._fromObject(arguments);
+	this._fromObject = function (obj) {
 		this.buffer.writeUInt32LE(obj * 1000, this.offset);
 	};
 };
@@ -293,12 +269,10 @@ iecstruct.TOD = iecstruct.TIME_OF_DAY = iecstruct.TIME = new iecstruct._TIME();
 
 iecstruct._LINT = function() {
 	this.bytelength = 8;
-	this.asObject = function () {
-		this._asObject(arguments);
+	this._asObject = function () {
 		return this.buffer.readInt64LE(this.offset);
 	};
-	this.fromObject = function (obj) {
-		this._fromObject(arguments);
+	this._fromObject = function (obj) {
 		this.buffer.writeInt64LE(obj, this.offset);
 	};
 };
@@ -307,12 +281,10 @@ iecstruct.LINT = new iecstruct._LINT();
 
 iecstruct._ULINT = function() {
 	this.bytelength = 8;
-	this.asObject = function () {
-		this._asObject(arguments);
+	this._asObject = function () {
 		return this.buffer.readUInt64LE(this.offset);
 	};
-	this.fromObject = function (obj) {
-		this._fromObject(arguments);
+	this._fromObject = function (obj) {
 		this.buffer.writeUInt64LE(obj, this.offset);
 	};
 };
@@ -321,12 +293,10 @@ iecstruct.LWORD = iecstruct.ULINT = new iecstruct._ULINT();
 
 iecstruct._LREAL = function() {
 	this.bytelength = 8;
-	this.asObject = function () {
-		this._asObject(arguments);
+	this._asObject = function () {
 		return this.buffer.readDoubleLE(this.offset);
 	};
-	this.fromObject = function (obj) {
-		this._fromObject(arguments);
+	this._fromObject = function (obj) {
 		this.buffer.writeDoubleLE(obj, this.offset);
 	};
 };
@@ -357,8 +327,7 @@ iecstruct.prototype.addArray = function (name, type, length) {
 	return this;
 };
 
-iecstruct.prototype.asObject = function () {
-	this._asObject(arguments);
+iecstruct.prototype._asObject = function () {
 	var output = {};
 	for (var i = 0; i < this.elementNames.length; ++i) {
 		output[this.elementNames[i]] = this.elements[i].type.asObject(this.buffer, this.offset);
@@ -366,8 +335,7 @@ iecstruct.prototype.asObject = function () {
 	}
 	return output;
 };
-iecstruct.prototype.fromObject = function (obj) {
-	this._fromObject(arguments);
+iecstruct.prototype._fromObject = function (obj) {
 	for (var i = 0; i < this.elementNames.length; ++i) {
 		this.elements[i].type.fromObject(obj[this.elementNames[i]], this.buffer, this.offset);
 		this.offset += this.elements[i].bytelength;
