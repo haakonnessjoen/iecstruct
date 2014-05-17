@@ -28,13 +28,24 @@ var ST_Scenario = new iecstruct()
 	.addElement('bScenarioInUse', iecstruct.BOOL)
 	.addArray  ('Triggers', ST_ScenarioTrigger, 100);
 
-var Scenarios = new iecstruct()
-	.addArray  ('Scenarios', ST_Scenario, 100);
+var Scenarios = new iecstruct.ARRAY('ST_Scenario', 100);
 
-var buffer = new Buffer(Scenarios.bytelength); /* this buffer could be fetched from the ads library */
-var obj = Scenarios.asObject(buffer, 0);
+var obj = Scenarios.asObject();
+obj[0].sName = "First scenario";
 
 console.log(obj);
+
+// Back to buffer:
+Scenarios.fromObject(obj);
+
+/* Buffer can be specified: */
+var buffer = new Buffer(Scenarios.bytelength);
+/* .. put code to insert data into buffer here */
+var obj = Scenarios.asObject(buffer);
+/* You can also write to a buffer */
+Scenarios.fromObject(obj, buffer);
+
+
 ```
 
 License (MIT)
