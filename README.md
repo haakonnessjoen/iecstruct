@@ -11,7 +11,7 @@ All variable types are supported, look in table below for syntax.
 Variable type | ST Syntax | iecstruct syntax
 --- | --- | ---
 ARRAY | ARRAY[1..25] OF VARIABLETYPE | new iecstruct.ARRAY(VARIABLETYPE, 25)
-STRUCT | TYPE name : STRUCT .. END STRUCT | new iecstruct()
+STRUCT | TYPE name : STRUCT .. END STRUCT | new iecstruct.STRUCT()
 STRING | STRING[20] | new iecstruct.STRING(20)
 WSTRING | WSTRING[20] | new iecstruct.WSTRING(20)
 ENUM | **see note 1** | **see note 1**
@@ -70,6 +70,14 @@ var E_TRAFFIC_SIGNAL = new iecstruct.ENUM({
 	Yellow: 10,
 	Green: ''
 });
+
+/* OR */
+
+var E_TRAFFIC_SIGNAL = new iecstruct.ENUM()
+	.addValue('Red')
+	.addValue('Yellow', 10)
+	.addValue('Green');
+
 ```
 Enum variables will return string names for the known enum values, and plain digits if an invalid ENUM value is set/read.
 
@@ -88,11 +96,11 @@ var E_TriggerFunction = new iecstruct.ENUM({
 });
 
 
-var ST_ScenarioTrigger = new iecstruct()
+var ST_ScenarioTrigger = new iecstruct.STRUCT()
 	.addElement('eTriggerFunction', E_TriggerFunction)
 	.addElement('nElementNo', iecstruct.UINT);
 
-var ST_Scenario = new iecstruct()
+var ST_Scenario = new iecstruct.STRUCT()
 	.addElement('sName', new iecstruct.STRING(256))
 	.addElement('bScenarioEnabled', iecstruct.BOOL)
 	.addElement('bScenarioInUse', iecstruct.BOOL)
@@ -128,7 +136,7 @@ var MyArray = new iecstruct.ARRAY(iecstruct.BOOL, 10);
 var obj = MyArray.asObject(my_iec_buffer);
 
 /* StructArray : ARRAY[1..25] OF ST_Simple; */
-var ST_Simple = new iecstruct()
+var ST_Simple = new iecstruct.STRUCT()
 	.addElement('bActive', iecstruct.BOOL)
 	.addElement('nNumber', iecstruct.UINT);
 var StructArray = new iecstruct.ARRAY(ST_Simple, 25);
@@ -138,7 +146,7 @@ var obj = StructArray.asObject(my_iec_buffer);
 ### Dual syntax for arrays
 ```javascript
 
-var ST_Scenario = new iecstruct()
+var ST_Scenario = new iecstruct.STRUCT()
 	.addElement('sName', new iecstruct.STRING(256))
 	.addElement('bScenarioEnabled', iecstruct.BOOL)
 	.addElement('bScenarioInUse', iecstruct.BOOL)
@@ -146,7 +154,7 @@ var ST_Scenario = new iecstruct()
 
 /* Is the same as */
 
-var ST_Scenario = new iecstruct()
+var ST_Scenario = new iecstruct.STRUCT()
 	.addElement('sName', new iecstruct.STRING(256))
 	.addElement('bScenarioEnabled', iecstruct.BOOL)
 	.addElement('bScenarioInUse', iecstruct.BOOL)

@@ -18,11 +18,7 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 // DEALINGS IN THE SOFTWARE.
 
-function iecstruct() {
-	this.elements = [];
-	this.elementNames = [];
-	this.bytelength = 0;
-}
+function iecstruct() {}
 iecstruct._VARIABLE = {
 	prototype: {
 		asObject: function (buffer, offset) {
@@ -51,6 +47,51 @@ iecstruct._VARIABLE = {
 		}
 	}
 };
+
+iecstruct.STRUCT = function () {
+	this.elements = [];
+	this.elementNames = [];
+	this.bytelength = 0;
+
+	this._asObject = function () {
+		var output = {};
+		for (var i = 0; i < this.elementNames.length; ++i) {
+			output[this.elementNames[i]] = this.elements[i].type.asObject(this.buffer, this.offset);
+			this.offset += this.elements[i].bytelength;
+		}
+		return output;
+	};
+	this._fromObject = function (obj) {
+		for (var i = 0; i < this.elementNames.length; ++i) {
+			this.elements[i].type.fromObject(obj[this.elementNames[i]], this.buffer, this.offset);
+			this.offset += this.elements[i].bytelength;
+		}
+	};
+}
+iecstruct.STRUCT.prototype.addElement = function (name, type) {
+	var element = {
+		name: name,
+		type: type
+	};
+	element.bytelength = type.bytelength;
+	this.elements.push(element);
+	this.elementNames.push(name);
+	this.bytelength += element.bytelength;
+	return this;
+};
+
+iecstruct.STRUCT.prototype.addArray = function (name, type, length) {
+	var element = {
+		name: name,
+		type: new iecstruct.ARRAY(type, length),
+	};
+	element.bytelength = element.type.bytelength;
+	this.elements.push(element);
+	this.elementNames.push(name);
+	this.bytelength += element.type.bytelength;
+	return this;
+};
+iecstruct.STRUCT.prototype.__proto__ = iecstruct._VARIABLE.prototype;
 
 iecstruct.ARRAY = function (type, length) {
 	this.bytelength = length * type.bytelength;
@@ -122,24 +163,30 @@ iecstruct.WSTRING = function (length) {
 };
 iecstruct.WSTRING.prototype.__proto__ = iecstruct._VARIABLE.prototype;
 
-iecstruct.ENUM = function (enumlist) {
+iecstruct.ENUM = function () {
+	this.enumlist={};
+	this.lastval = -1;
 	this.bytelength = 2;
-	if (typeof enumlist != 'object') {
-		throw new Error("enumlist must be a object of enumeration key value pairs");
+	var enumlist = arguments.length > 0 ? arguments[0] : undefined;
+
+	if (typeof enumlist != 'undefined' && typeof enumlist != 'object') {
+		throw new Error("If specified, the first parameter must be a object of key value pairs containing name and numbers");
 		return;
 	}
-	var lastval = -1;
-	for (var key in enumlist) {
-		if (!(enumlist[key]+'').match(/^\d+$/)) {
-			enumlist[key] = ++lastval;
+
+	this.addValue = function (name) {
+		var value = arguments.length > 1 ? arguments[1] : '';
+		if (!(value+'').match(/^\d+$/)) {
+			this.enumlist[name] = ++this.lastval;
 		} else {
-			lastval = enumlist[key];
+			this.enumlist[name] = value;
+			this.lastval = value;
 		}
-	}
+	};
 	this._asObject = function () {
 		var value = this.buffer.readUInt16LE(this.offset);
-		for (var key in enumlist) {
-			if (enumlist[key] === value) {
+		for (var key in this.enumlist) {
+			if (this.enumlist[key] === value) {
 				return key;
 			}
 		}
@@ -147,15 +194,24 @@ iecstruct.ENUM = function (enumlist) {
 	};
 	this._fromObject = function (obj) {
 		var value;
-		if (obj in enumlist) {
-			value = enumlist[obj];
+		if (typeof(obj) == 'undefined') {
+			obj = 0;
+		}
+		if (obj in this.enumlist) {
+			value = this.enumlist[obj];
 		} else if (!(obj+"").match(/^\d+$/)) {
-			throw new Error("Invalid enum value");
+			throw new Error("Invalid enum value: '" + obj + "' not in ENUM(" + Object.keys(this.enumlist).join(",") + ").");
 		} else {
 			value = obj;
 		}
 		this.buffer.writeUInt16LE(value, this.offset);
 	};
+
+	if (typeof enumlist == 'object') {
+		for (var key in enumlist) {
+			this.addValue(key, enumlist[key]);
+		}
+	}
 };
 iecstruct.ENUM.prototype.__proto__ = iecstruct._VARIABLE.prototype;
 
@@ -302,45 +358,5 @@ iecstruct._LREAL = function() {
 };
 iecstruct._LREAL.prototype.__proto__ = iecstruct._VARIABLE.prototype;
 iecstruct.LREAL = new iecstruct._LREAL();
-
-iecstruct.prototype.addElement = function (name, type) {
-	var element = {
-		name: name,
-		type: type
-	};
-	element.bytelength = type.bytelength;
-	this.elements.push(element);
-	this.elementNames.push(name);
-	this.bytelength += element.bytelength;
-	return this;
-};
-
-iecstruct.prototype.addArray = function (name, type, length) {
-	var element = {
-		name: name,
-		type: new iecstruct.ARRAY(type, length),
-	};
-	element.bytelength = element.type.bytelength;
-	this.elements.push(element);
-	this.elementNames.push(name);
-	this.bytelength += element.type.bytelength;
-	return this;
-};
-
-iecstruct.prototype._asObject = function () {
-	var output = {};
-	for (var i = 0; i < this.elementNames.length; ++i) {
-		output[this.elementNames[i]] = this.elements[i].type.asObject(this.buffer, this.offset);
-		this.offset += this.elements[i].bytelength;
-	}
-	return output;
-};
-iecstruct.prototype._fromObject = function (obj) {
-	for (var i = 0; i < this.elementNames.length; ++i) {
-		this.elements[i].type.fromObject(obj[this.elementNames[i]], this.buffer, this.offset);
-		this.offset += this.elements[i].bytelength;
-	}
-};
-iecstruct.prototype.__proto__ = iecstruct._VARIABLE.prototype;
 
 module.exports = exports = iecstruct;
