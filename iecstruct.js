@@ -182,6 +182,7 @@ iecstruct.ENUM = function () {
 			this.enumlist[name] = value;
 			this.lastval = value;
 		}
+		return this;
 	};
 	this._asObject = function () {
 		var value = this.buffer.readUInt16LE(this.offset);
