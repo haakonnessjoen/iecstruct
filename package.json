@@ -1,6 +1,6 @@
 {
   "name": "iecstruct",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Datatype parser/writer for IEC 61131-3 types and structs",
   "main": "iecstruct.js",
   "keywords": [
