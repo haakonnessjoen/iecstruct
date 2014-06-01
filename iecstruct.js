@@ -216,6 +216,60 @@ iecstruct.ENUM = function () {
 };
 iecstruct.ENUM.prototype.__proto__ = iecstruct._VARIABLE.prototype;
 
+iecstruct.miniENUM = function () {
+	this.enumlist={};
+	this.lastval = -1;
+	this.bytelength = 1;
+	var enumlist = arguments.length > 0 ? arguments[0] : undefined;
+
+	if (typeof enumlist != 'undefined' && typeof enumlist != 'object') {
+		throw new Error("If specified, the first parameter must be a object of key value pairs containing name and numbers");
+		return;
+	}
+
+	this.addValue = function (name) {
+		var value = arguments.length > 1 ? arguments[1] : '';
+		if (!(value+'').match(/^\d+$/)) {
+			this.enumlist[name] = ++this.lastval;
+		} else {
+			this.enumlist[name] = value;
+			this.lastval = value;
+		}
+		return this;
+	};
+	this._asObject = function () {
+		var value = this.buffer.readUInt8(this.offset);
+		for (var key in this.enumlist) {
+			if (this.enumlist[key] === value) {
+				return key;
+			}
+		}
+		return value;
+	};
+	this._fromObject = function (obj) {
+		var value;
+		if (typeof(obj) == 'undefined') {
+			obj = 0;
+		}
+		if (obj in this.enumlist) {
+			value = this.enumlist[obj];
+		} else if (!(obj+"").match(/^\d+$/)) {
+			throw new Error("Invalid enum value: '" + obj + "' not in miniENUM(" + Object.keys(this.enumlist).join(",") + ").");
+		} else {
+			value = obj;
+		}
+		this.buffer.writeUInt8(value, this.offset);
+	};
+
+	if (typeof enumlist == 'object') {
+		for (var key in enumlist) {
+			this.addValue(key, enumlist[key]);
+		}
+	}
+};
+iecstruct.miniENUM.prototype.__proto__ = iecstruct._VARIABLE.prototype;
+
+
 iecstruct._BOOL = function() {
 	this.bytelength = 1;
 	this._asObject = function () {
