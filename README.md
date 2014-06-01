@@ -1,7 +1,7 @@
 iecstruct
 =========
 
-A NodeJS library for parsing and saving IEC 61131-3 structs and types.
+A NodeJS library for parsing and saving IEC 61131-3 structs and types from/to binary buffers.
 
 Support for types
 -----------------

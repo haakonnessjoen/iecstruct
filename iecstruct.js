@@ -243,7 +243,7 @@ iecstruct.SINT = new iecstruct._SINT();
 iecstruct._USINT = function() {
 	this.bytelength = 1;
 	this._asObject = function () {
-		return this.buffer.readUInt8(offset);
+		return this.buffer.readUInt8(this.offset);
 	};
 	this._fromObject = function (obj) {
 		this.buffer.writeUInt8(obj, this.offset);
